@@ -15,17 +15,28 @@ currentcal = currentcal[9:-1]
 
 # '\n'.join(currentcal).split('BEGIN:VEVENT')
 
-events = []
+
+
+events = {}
 while 1:
 	try:
 		endindex = currentcal.index('END:VEVENT')
 		event = currentcal[:endindex+1]
 		for line in event:
 			if 'UID' in line:
-				print line
-		events.append('\n'.join(currentcal[:endindex+1]))
+				uid = line
+		events[uid] = '\n'.join(currentcal[:endindex+1])
 		del currentcal[:endindex+1]
 	except:
 		break
 
-print events
+
+
+updatedcal = open('tv.ical','w')
+listevents = events.keys()
+updatedcal.write('\n'.join(calheader))
+updatedcal.write('\n')
+for evt in listevents:
+	updatedcal.write(events[evt])
+	updatedcal.write('\n')
+updatedcal.write('\n'.join(calfooter))
