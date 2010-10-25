@@ -1,11 +1,31 @@
 from sys import argv
 import urllib2
 
+# for use with 'TV calendar' from http://www.pogdesign.co.uk/cat/
+
 catid = argv[1]
-print catid
-
 urlroot = 'http://www.pogdesign.co.uk/cat/generate_ics/'
-
 ical = urllib2.urlopen(urlroot+catid)
 
-print ical.read()
+# static locations for now..
+
+currentcal = ical.read().splitlines()
+calheader, calfooter = currentcal[:9], currentcal[-1:]
+currentcal = currentcal[9:-1]
+
+# '\n'.join(currentcal).split('BEGIN:VEVENT')
+
+events = []
+while 1:
+	try:
+		endindex = currentcal.index('END:VEVENT')
+		event = currentcal[:endindex+1]
+		for line in event:
+			if 'UID' in line:
+				print line
+		events.append('\n'.join(currentcal[:endindex+1]))
+		del currentcal[:endindex+1]
+	except:
+		break
+
+print events
