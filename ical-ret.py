@@ -1,11 +1,12 @@
-from sys import argv
 import os
-import urllib2
 import argparse
+import syslog
+import urllib2
+
 
 # breaks ical file apart into events
 def parse_ical(cal,dict):
-	while 1:
+	while True:
 		try:
 			endindex = cal.index('END:VEVENT')
 			event = cal[:endindex+1]
@@ -32,6 +33,7 @@ if __name__=='__main__':
 		oldcal = oldcalfid.read().splitlines()
 		oldcal = oldcal[9:-1]
 		parse_ical(oldcal,events)
+		oldcalfid.close()
 
 	# pull freshest cal from web
 	ical = urllib2.urlopen(args.url)
@@ -52,3 +54,8 @@ if __name__=='__main__':
 		updatedcal.write(events[evt])
 		updatedcal.write('\n')
 	updatedcal.write('\n'.join(calfooter))
+	updatedcal.close()
+
+	# check size, write to syslog
+	filesize = os.path.getsize(args.out+'.ical')
+	syslog.syslog(args.out+'.ical '+str(filesize))
