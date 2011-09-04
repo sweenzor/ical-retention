@@ -5,7 +5,8 @@ import urllib2
 
 
 # breaks ical file apart into events
-def parse_ical(cal,dict):
+def parse_ical(calendar,dict):
+	cal = calendar[:]
 	while True:
 		try:
 			endindex = cal.index('END:VEVENT')
@@ -43,22 +44,23 @@ if __name__=='__main__':
 		oldcalfid.close()
 	print 'local calendar contains '+ \
 		str(len(events))+ ' events.'
-	pretty_ical(events)
-	print '\n\n'
 
 	# pull freshest cal from web
 	ical = urllib2.urlopen(args.url)
 
 	# remove header/footer, static locations for now..
+	remote_events = {}
 	currentcal = ical.read().splitlines()
 	calheader, calfooter = currentcal[:9], currentcal[-1:]
 	currentcal = currentcal[9:-1]
 	
+	parse_ical(currentcal,remote_events)
+	print 'remote calendar contains '+ \
+		str(len(remote_events))+ ' events.'
+
 	parse_ical(currentcal,events)
 	print 'local calendar now contains '+ \
 		str(len(events))+ ' events.'
-	print '\n\n'
-	print events
 
 	# write dict of events back out to file
 	updatedcal = open(args.out+'.ical','w')
@@ -72,5 +74,5 @@ if __name__=='__main__':
 	updatedcal.close()
 
 	# check size, write to syslog
-	filesize = os.path.getsize(args.out+'.ical')
-	syslog.syslog(args.out+'.ical '+str(filesize))
+	syslog.syslog(args.out+'.ical contains ' \
+		+str(len(events)) + ' entries')
