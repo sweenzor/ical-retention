@@ -2,6 +2,7 @@ import os
 import argparse
 import syslog
 import urllib2
+from datetime import datetime, date
 
 
 # breaks ical file apart into events
@@ -15,11 +16,18 @@ def parse_ical(calendar,dict):
 				if 'UID' in line:
 					uid = line
 				if 'START' in line:
-					date = line[8:-7]
-			dict[uid] = '\n'.join(cal[:endindex+1])
+					entry_date = line[8:-7]
+			dict[uid] = [entry_date, '\n'.join(cal[:endindex+1])]
 			del cal[:endindex+1]
 		except:
 			break
+
+def expire_entries(dict,duration):
+	for key, entry in dict.items():
+		entry_date = datetime.strptime(entry[0], '%Y%m%d')
+		delta = datetime.today() - entry_date
+		if (int(delta.days) >= int(duration)):
+			del dict[key]
 
 def pretty_ical(dict):
 	for entry in dict:
@@ -32,6 +40,7 @@ if __name__=='__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('url')
 	parser.add_argument('out')
+	parser.add_argument('expire')
 	args = parser.parse_args()
 
 	# read (or create) local cal
@@ -42,6 +51,11 @@ if __name__=='__main__':
 		oldcal = oldcal[9:-1]
 		parse_ical(oldcal,events)
 		oldcalfid.close()
+	print 'local calendar contains '+ \
+		str(len(events))+ ' events.'
+
+	#expire old entries
+	expire_entries(events, args.expire)
 	print 'local calendar contains '+ \
 		str(len(events))+ ' events.'
 
@@ -68,7 +82,7 @@ if __name__=='__main__':
 	updatedcal.write('\n'.join(calheader))
 	updatedcal.write('\n')
 	for evt in listevents:
-		updatedcal.write(events[evt])
+		updatedcal.write(events[evt][1])
 		updatedcal.write('\n')
 	updatedcal.write('\n'.join(calfooter))
 	updatedcal.close()
