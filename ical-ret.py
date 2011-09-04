@@ -13,10 +13,17 @@ def parse_ical(cal,dict):
 			for line in event:
 				if 'UID' in line:
 					uid = line
+				if 'START' in line:
+					date = line[8:-7]
 			dict[uid] = '\n'.join(cal[:endindex+1])
 			del cal[:endindex+1]
 		except:
 			break
+
+def pretty_ical(dict):
+	for entry in dict:
+		print entry
+
 
 if __name__=='__main__':
 
@@ -34,6 +41,10 @@ if __name__=='__main__':
 		oldcal = oldcal[9:-1]
 		parse_ical(oldcal,events)
 		oldcalfid.close()
+	print 'local calendar contains '+ \
+		str(len(events))+ ' events.'
+	pretty_ical(events)
+	print '\n\n'
 
 	# pull freshest cal from web
 	ical = urllib2.urlopen(args.url)
@@ -42,8 +53,12 @@ if __name__=='__main__':
 	currentcal = ical.read().splitlines()
 	calheader, calfooter = currentcal[:9], currentcal[-1:]
 	currentcal = currentcal[9:-1]
-
+	
 	parse_ical(currentcal,events)
+	print 'local calendar now contains '+ \
+		str(len(events))+ ' events.'
+	print '\n\n'
+	print events
 
 	# write dict of events back out to file
 	updatedcal = open(args.out+'.ical','w')
